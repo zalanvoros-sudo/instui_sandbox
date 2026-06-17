@@ -3,11 +3,28 @@
   <head>
     <meta charset="utf-8" />
     <script>
+      // GitHub Pages SPA fallback.
+      //
+      // The app is served under a SINGLE-segment base path (/instui_sandbox/).
+      // On a direct deep link (e.g. /instui_sandbox/admin-courses-v2) GitHub has
+      // no matching static file, so it serves this 404.html. We keep ONLY the
+      // base segment, move the remaining route into ?p= (and any original query
+      // into &q=), then redirect to the base ROOT. GitHub serves index.html for
+      // the base root, which decodes p/q back into a clean URL and hands off to
+      // React Router.
+      //
+      // pathSegmentsToKeep MUST equal the number of path segments in the base
+      // path. For /instui_sandbox/ that is 1. The previous value kept the route
+      // segment too, so the redirect target STILL 404'd → this script re-ran and
+      // re-encoded p/q on every cycle → "Error: URI Too Long". Redirecting to the
+      // base root (which DOES resolve to index.html) is what breaks that loop.
+      var pathSegmentsToKeep = 1;
+
       var l = window.location;
       l.replace(
         l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-        l.pathname.split('/').slice(0, 3).join('/') +
-        '/?p=' + encodeURIComponent(l.pathname.split('/').slice(3).join('/')) +
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') +
+        '/?p=' + encodeURIComponent(l.pathname.split('/').slice(1 + pathSegmentsToKeep).join('/')) +
         (l.search ? '&q=' + encodeURIComponent(l.search.slice(1)) : '') +
         l.hash
       );
